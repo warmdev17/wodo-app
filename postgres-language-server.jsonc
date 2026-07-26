@@ -1,0 +1,15 @@
+{
+  "$schema": "https://pg-language-server.com/latest/schema.json",
+  "db": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "username": "postgres",
+    "password": "maiphuong",
+    "database": "wodo_app_db",
+    "connTimeoutSecs": 10,
+    "allowStatementExecutionsAgainst": [
+      "127.0.0.1/*",
+      "localhost/*"
+    ]
+  }
+}

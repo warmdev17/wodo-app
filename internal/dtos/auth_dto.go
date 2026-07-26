@@ -1,0 +1,12 @@
+// Package dtos
+package dtos
+
+type RegisterRequest struct {
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginRequest struct {
+	Identifier string `json:"identifier" binding:"required,min=3"`
+}
