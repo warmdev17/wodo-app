@@ -9,6 +9,7 @@ import (
 	"github.com/warmdev17/Wodo-App/internal/controllers"
 	"github.com/warmdev17/Wodo-App/internal/repositories"
 	"github.com/warmdev17/Wodo-App/internal/services"
+	"github.com/warmdev17/Wodo-App/pkg/jwt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -30,8 +31,9 @@ func main() {
 	}()
 
 	repo := repositories.New(db)
-	userSvc := services.NewUserService(repo)
-	userCtrl := controllers.NewUserController(userSvc)
+	jwtSvc := jwt.NewService(cfg.JWTSecret)
+	authSvc := services.NewAuthService(repo, jwtSvc)
+	userCtrl := controllers.NewUserController(authSvc)
 
 	r := gin.Default()
 
