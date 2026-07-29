@@ -46,3 +46,7 @@ func Unauthorized(c *gin.Context, message string, errDetail any) {
 func InternalError(c *gin.Context, message string, errDetail any) {
 	send(c, http.StatusInternalServerError, "error", message, nil, errDetail)
 }
+
+func Conflict(c *gin.Context, message string, errDetail any) {
+	send(c, http.StatusConflict, "fail", message, nil, errDetail)
+}
