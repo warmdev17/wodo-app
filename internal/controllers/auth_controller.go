@@ -12,8 +12,8 @@ type AuthController struct {
 	authService *services.AuthService
 }
 
-func NewUserController(userService *services.AuthService) *AuthController {
-	return &AuthController{authService: userService}
+func NewAuthController(authService *services.AuthService) *AuthController {
+	return &AuthController{authService: authService}
 }
 
 func (c *AuthController) Register(ctx *gin.Context) {
@@ -34,4 +34,23 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		"message": "Create account success",
 		"data":    user,
 	})
+}
+
+func (c *AuthController) Login(ctx *gin.Context) {
+	var req dtos.LoginRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := c.authService.LoginUser(ctx, req)
+	switch err {
+	case services.ErrInvalidCredentials:
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Credentials"})
+	default:
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": user})
 }

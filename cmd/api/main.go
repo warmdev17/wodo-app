@@ -33,13 +33,13 @@ func main() {
 	repo := repositories.New(db)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
 	authSvc := services.NewAuthService(repo, jwtSvc)
-	userCtrl := controllers.NewUserController(authSvc)
+	authCtrl := controllers.NewAuthController(authSvc)
 
 	r := gin.Default()
 
 	api := r.Group("/api/v1")
 	{
-		api.POST("/auth/register", userCtrl.Register)
+		api.POST("/auth/register", authCtrl.Register)
 	}
 
 	err = r.Run(":8080")
