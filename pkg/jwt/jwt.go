@@ -40,20 +40,20 @@ func (s *Service) GenerateToken(userID uuid.UUID, ttlMinutes int) (string, error
 }
 
 func (s *Service) ParseToken(tokenString string) (*Claims, error) {
-	token, err := jwtlib.ParseWithClaims(tokenString, &Claims{}, func(t *jwtlib.Token) (any, error) {
+	claims := &Claims{}
+	token, err := jwtlib.ParseWithClaims(tokenString, claims, func(t *jwtlib.Token) (any, error) {
 		if _, ok := t.Method.(*jwtlib.SigningMethodHMAC); !ok {
 			return nil, jwtlib.ErrSignatureInvalid
 		}
 
-		return s.secret, nil
+		return []byte(s.secret), nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
+	if !token.Valid {
 		return nil, jwtlib.ErrSignatureInvalid
 	}
 
