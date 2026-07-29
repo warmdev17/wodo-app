@@ -40,6 +40,7 @@ func main() {
 	api := r.Group("/api/v1")
 	{
 		api.POST("/auth/register", authCtrl.Register)
+		api.POST("/auth/login", authCtrl.Login)
 	}
 
 	err = r.Run(":8080")

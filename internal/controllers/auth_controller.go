@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -45,12 +46,14 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	}
 
 	user, err := c.authService.LoginUser(ctx, req)
-	switch err {
-	case services.ErrInvalidCredentials:
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Credentials"})
-	default:
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-	}
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidCredentials) {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": services.ErrInvalidCredentials.Error()})
+			return
+		}
 
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{"data": user})
 }
