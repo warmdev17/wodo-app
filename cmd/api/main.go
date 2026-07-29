@@ -7,14 +7,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/warmdev17/Wodo-App/internal/config"
 	"github.com/warmdev17/Wodo-App/internal/controllers"
+	"github.com/warmdev17/Wodo-App/internal/middlewares"
 	"github.com/warmdev17/Wodo-App/internal/repositories"
 	"github.com/warmdev17/Wodo-App/internal/services"
+	"github.com/warmdev17/Wodo-App/pkg/jwt"
+	"github.com/warmdev17/Wodo-App/pkg/response"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
 	cfg := config.Load()
+	log.Printf("JWTSecret: %v", cfg.JWTSecret)
 
 	connStr := cfg.DatabaseURL
 	db, err := sql.Open("pgx", connStr)
@@ -30,14 +34,27 @@ func main() {
 	}()
 
 	repo := repositories.New(db)
-	userSvc := services.NewUserService(repo)
-	userCtrl := controllers.NewUserController(userSvc)
+	jwtSvc := jwt.NewService(cfg.JWTSecret)
+	authSvc := services.NewAuthService(repo, jwtSvc)
+	authCtrl := controllers.NewAuthController(authSvc)
 
 	r := gin.Default()
 
 	api := r.Group("/api/v1")
 	{
-		api.POST("/auth/register", userCtrl.Register)
+		api.POST("/auth/register", authCtrl.Register)
+		api.POST("/auth/login", authCtrl.Login)
+	}
+
+	protected := r.Group("/api/v1")
+	protected.Use(middlewares.AuthMiddleware(jwtSvc))
+	{
+		protected.GET("/users/me", func(ctx *gin.Context) {
+			userID, _ := ctx.Get("userID")
+			response.Success(ctx, "Get profile successful", gin.H{
+				"userId": userID,
+			})
+		})
 	}
 
 	err = r.Run(":8080")
