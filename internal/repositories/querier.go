@@ -6,10 +6,16 @@ package repositories
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
+	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteRefreshToken(ctx context.Context, token string) error
+	DeleteUserRefreshToken(ctx context.Context, userID uuid.UUID) error
+	GetRefreshToken(ctx context.Context, token string) (RefreshToken, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByEmailOrUsername(ctx context.Context, identifier string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
