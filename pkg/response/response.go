@@ -16,8 +16,8 @@ type APIResponse[T any] struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func send[T any](c *gin.Context, statusCode int, status string, message string, data T, errDetail any) {
-	c.JSON(statusCode, APIResponse[T]{
+func send(c *gin.Context, statusCode int, status string, message string, data any, errDetail any) {
+	c.JSON(statusCode, APIResponse[any]{
 		Status:    status,
 		Message:   message,
 		Data:      data,
@@ -33,4 +33,16 @@ func Success[T any](c *gin.Context, message string, data T) {
 
 func Created[T any](c *gin.Context, message string, data T) {
 	send(c, http.StatusCreated, "success", message, data, nil)
+}
+
+func BadRequest(c *gin.Context, message string, errDetail any) {
+	send(c, http.StatusBadRequest, "fail", message, nil, errDetail)
+}
+
+func Unauthorized(c *gin.Context, message string, errDetail any) {
+	send(c, http.StatusUnauthorized, "fail", message, nil, errDetail)
+}
+
+func InternalError(c *gin.Context, message string, errDetail any) {
+	send(c, http.StatusInternalServerError, "error", message, nil, errDetail)
 }
