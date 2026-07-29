@@ -9,6 +9,7 @@ import (
 	"github.com/warmdev17/Wodo-App/internal/controllers"
 	"github.com/warmdev17/Wodo-App/internal/repositories"
 	"github.com/warmdev17/Wodo-App/internal/services"
+	"github.com/warmdev17/Wodo-App/pkg/jwt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -30,14 +31,16 @@ func main() {
 	}()
 
 	repo := repositories.New(db)
-	userSvc := services.NewUserService(repo)
-	userCtrl := controllers.NewUserController(userSvc)
+	jwtSvc := jwt.NewService(cfg.JWTSecret)
+	authSvc := services.NewAuthService(repo, jwtSvc)
+	authCtrl := controllers.NewAuthController(authSvc)
 
 	r := gin.Default()
 
 	api := r.Group("/api/v1")
 	{
-		api.POST("/auth/register", userCtrl.Register)
+		api.POST("/auth/register", authCtrl.Register)
+		api.POST("/auth/login", authCtrl.Login)
 	}
 
 	err = r.Run(":8080")
