@@ -12,14 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	ErrInvalidInput       = errors.New("invalid input")
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUserNotFound       = errors.New("user not found")
-	ErrEmailTaken         = errors.New("email already registered")
-	ErrUsernameTaken      = errors.New("username already registered")
-)
-
 type AuthService struct {
 	repo   repositories.Querier
 	jwtSvc *jwt.Service
@@ -64,4 +56,26 @@ func (s *AuthService) RegisterUser(ctx context.Context, req dtos.RegisterRequest
 	}
 
 	return userDTO, nil
+}
+
+func (s *AuthService) LoginUser(ctx context.Context, req dtos.LoginRequest) (dtos.AuthResponse, error) {
+	user, err := s.repo.GetUserByEmailOrUsername(ctx, req.Identifier)
+	if err != nil {
+		return dtos.AuthResponse{}, ErrInvalidCredentials
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(req.Password))
+	if err != nil {
+		return dtos.AuthResponse{}, ErrInvalidCredentials
+	}
+
+	accessToken, err := s.jwtSvc.GenerateToken(user.ID, 15)
+	if err != nil {
+		return dtos.AuthResponse{}, err
+	}
+
+	return dtos.AuthResponse{
+		AccessToken: accessToken,
+		User:        dtos.ToUserResponse(user),
+	}, nil
 }
