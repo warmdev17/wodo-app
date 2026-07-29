@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/warmdev17/Wodo-App/internal/dtos"
 	"github.com/warmdev17/Wodo-App/internal/services"
+	res "github.com/warmdev17/Wodo-App/pkg/response"
 )
 
 type AuthController struct {
@@ -21,39 +21,43 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	var req dtos.RegisterRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res.BadRequest(ctx, "Invalid request body", err.Error())
 		return
 	}
 
 	user, err := c.authService.RegisterUser(ctx.Request.Context(), req)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot register " + err.Error()})
+		if errors.Is(err, services.ErrEmailTaken) {
+			res.Conflict(ctx, "Cannot register", services.ErrEmailTaken.Error())
+			return
+		} else if errors.Is(err, services.ErrUsernameTaken) {
+			res.Conflict(ctx, "Cannot register", services.ErrUsernameTaken.Error())
+			return
+		}
+		res.InternalError(ctx, "Cannot register", err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"message": "Create account success",
-		"data":    user,
-	})
+	res.Created(ctx, "Create new account successful", user)
 }
 
 func (c *AuthController) Login(ctx *gin.Context) {
 	var req dtos.LoginRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res.BadRequest(ctx, "Invalid request body", err.Error())
 		return
 	}
 
-	user, err := c.authService.LoginUser(ctx, req)
+	user, err := c.authService.LoginUser(ctx.Request.Context(), req)
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidCredentials) {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": services.ErrInvalidCredentials.Error()})
+			res.Unauthorized(ctx, "Failed to login", services.ErrInvalidCredentials.Error())
 			return
 		}
 
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		res.InternalError(ctx, "Error from server side", err.Error())
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": user})
+	res.Success(ctx, "Login successful", user)
 }
