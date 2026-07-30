@@ -23,12 +23,12 @@ func NewService(secret string) *Service {
 	return &Service{secret: []byte(secret)}
 }
 
-func (s *Service) GenerateToken(userID uuid.UUID, ttlMinutes int) (string, error) {
+func (s *Service) GenerateToken(userID uuid.UUID, duration time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwtlib.RegisteredClaims{
 			IssuedAt:  jwtlib.NewNumericDate(now),
-			ExpiresAt: jwtlib.NewNumericDate(now.Add(time.Duration(ttlMinutes) * time.Minute)),
+			ExpiresAt: jwtlib.NewNumericDate(now.Add(duration)),
 			Subject:   userID.String(),
 		},
 		UserID: userID,
@@ -36,7 +36,7 @@ func (s *Service) GenerateToken(userID uuid.UUID, ttlMinutes int) (string, error
 
 	token := jwtlib.NewWithClaims(jwtlib.SigningMethodHS256, claims)
 
-	return token.SignedString(s.secret)
+	return token.SignedString([]byte(s.secret))
 }
 
 func (s *Service) ParseToken(tokenString string) (*Claims, error) {
