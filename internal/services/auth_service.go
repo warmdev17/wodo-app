@@ -4,6 +4,8 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/warmdev17/Wodo-App/internal/dtos"
@@ -13,12 +15,14 @@ import (
 )
 
 type AuthService struct {
-	repo   repositories.Querier
-	jwtSvc *jwt.Service
+	repo       repositories.Querier
+	jwtSvc     *jwt.Service
+	accessTTL  time.Duration
+	refreshTTL time.Duration
 }
 
-func NewAuthService(repo repositories.Querier, jwtSvc *jwt.Service) *AuthService {
-	return &AuthService{repo: repo, jwtSvc: jwtSvc}
+func NewAuthService(repo repositories.Querier, jwtSvc *jwt.Service, accessTTL time.Duration, refreshTTL time.Duration) *AuthService {
+	return &AuthService{repo: repo, jwtSvc: jwtSvc, accessTTL: accessTTL, refreshTTL: refreshTTL}
 }
 
 func (s *AuthService) RegisterUser(ctx context.Context, req dtos.RegisterRequest) (dtos.UserResponse, error) {
@@ -69,13 +73,29 @@ func (s *AuthService) LoginUser(ctx context.Context, req dtos.LoginRequest) (dto
 		return dtos.AuthResponse{}, ErrInvalidCredentials
 	}
 
-	accessToken, err := s.jwtSvc.GenerateToken(user.ID, 15)
+	accessToken, err := s.jwtSvc.GenerateToken(user.ID, s.accessTTL)
 	if err != nil {
-		return dtos.AuthResponse{}, err
+		return dtos.AuthResponse{}, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	refreshToken, err := s.jwtSvc.GenerateToken(user.ID, s.refreshTTL)
+	if err != nil {
+		return dtos.AuthResponse{}, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	args := repositories.CreateRefreshTokenParams{
+		UserID:    user.ID,
+		Token:     refreshToken,
+		ExpiresAt: time.Now().Add(s.refreshTTL),
+	}
+	_, err = s.repo.CreateRefreshToken(ctx, args)
+	if err != nil {
+		return dtos.AuthResponse{}, fmt.Errorf("failed to save refresh token: %w", err)
 	}
 
 	return dtos.AuthResponse{
-		AccessToken: accessToken,
-		User:        dtos.ToUserResponse(user),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         dtos.ToUserResponse(user),
 	}, nil
 }
