@@ -18,7 +18,6 @@ import (
 
 func main() {
 	cfg := config.Load()
-	log.Printf("JWTSecret: %v", cfg.JWTSecret)
 
 	connStr := cfg.DatabaseURL
 	db, err := sql.Open("pgx", connStr)
@@ -35,7 +34,7 @@ func main() {
 
 	repo := repositories.New(db)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
-	authSvc := services.NewAuthService(repo, jwtSvc)
+	authSvc := services.NewAuthService(repo, jwtSvc, cfg.AccessTokenExpiration, cfg.RefreshTokenExpiration)
 	authCtrl := controllers.NewAuthController(authSvc)
 
 	r := gin.Default()
