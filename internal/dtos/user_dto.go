@@ -8,6 +8,7 @@ import (
 type UserResponse struct {
 	UserID   uuid.UUID `json:"userId"`
 	Username string    `json:"username"`
+	Email    string    `json:"email"`
 }
 
 func ToUserResponse(u repositories.User) UserResponse {
