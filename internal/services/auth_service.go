@@ -57,6 +57,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, req dtos.RegisterRequest
 	userDTO := dtos.UserResponse{
 		UserID:   user.ID,
 		Username: user.Username,
+		Email:    user.Email,
 	}
 
 	return userDTO, nil
