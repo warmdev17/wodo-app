@@ -74,12 +74,12 @@ func (s *AuthService) LoginUser(ctx context.Context, req dtos.LoginRequest) (dto
 		return dtos.AuthResponse{}, ErrInvalidCredentials
 	}
 
-	accessToken, err := s.jwtSvc.GenerateToken(user.ID, s.accessTTL)
+	accessToken, _, err := s.jwtSvc.GenerateToken(user.ID, s.accessTTL)
 	if err != nil {
 		return dtos.AuthResponse{}, fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refreshToken, err := s.jwtSvc.GenerateToken(user.ID, s.refreshTTL)
+	refreshToken, expiredAt, err := s.jwtSvc.GenerateToken(user.ID, s.refreshTTL)
 	if err != nil {
 		return dtos.AuthResponse{}, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
@@ -87,7 +87,7 @@ func (s *AuthService) LoginUser(ctx context.Context, req dtos.LoginRequest) (dto
 	args := repositories.CreateRefreshTokenParams{
 		UserID:    user.ID,
 		Token:     refreshToken,
-		ExpiresAt: time.Now().Add(s.refreshTTL),
+		ExpiresAt: expiredAt,
 	}
 	_, err = s.repo.CreateRefreshToken(ctx, args)
 	if err != nil {
