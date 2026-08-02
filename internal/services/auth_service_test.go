@@ -141,3 +141,84 @@ func TestRegisterUser(t *testing.T) {
 		})
 	}
 }
+
+func TestLoginUser(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	cfg := config.Load()
+
+	connStr := "postgres://postgres:maiphuong@127.0.0.1:5432/wodo_test_db?sslmode=disable"
+	testDB, err := sql.Open("pgx", connStr)
+	if err != nil {
+		log.Fatalf("Failed to connect database: %v", err)
+	}
+	defer func() {
+		err := testDB.Close()
+
+		if err != nil {
+			log.Println("Failed to close connection pool")
+		}
+	}()
+
+	repo := repositories.New(testDB)
+	jwtSvc := jwt.NewService(cfg.JWTSecret)
+	authSvc := NewAuthService(repo, jwtSvc, cfg.AccessTokenExpiration, cfg.RefreshTokenExpiration)
+
+	reqSucess := dtos.LoginRequest{
+		Identifier: "warmdev",
+		Password:   "maiphuong",
+	}
+	reqWrongIdentifier := dtos.LoginRequest{
+		Identifier: "nhomnhom",
+		Password:   "maiphuong",
+	}
+	reqWrongPassword := dtos.LoginRequest{
+		Identifier: "warmdev",
+		Password:   "nhomnhom",
+	}
+
+	tests := []struct {
+		name    string
+		req     dtos.LoginRequest
+		wantErr error
+	}{
+		{
+			name:    "Success - Login",
+			req:     reqSucess,
+			wantErr: nil,
+		},
+		{
+			name:    "Failed - Wrong Identifier",
+			req:     reqWrongIdentifier,
+			wantErr: ErrInvalidCredentials,
+		},
+		{
+			name:    "Failed - Wrong Password",
+			req:     reqWrongPassword,
+			wantErr: ErrInvalidCredentials,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := authSvc.LoginUser(ctx, tt.req)
+
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("LoginUser() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+
+			if tt.wantErr != nil {
+				return
+			}
+
+			if res.AccessToken == "" {
+				t.Errorf("LoginUser() got empty AccessToken")
+			}
+
+			if res.RefreshToken == "" {
+				t.Errorf("LoginUser() got empty RefreshToken")
+			}
+		})
+	}
+}
