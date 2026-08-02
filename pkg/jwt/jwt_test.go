@@ -35,7 +35,7 @@ func TestGenerateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotToken, err := jwtSvc.GenerateToken(tt.userID, tt.duration)
+			gotToken, _, err := jwtSvc.GenerateToken(tt.userID, tt.duration)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("GenerateToken() error = %v, wantErr = %v", err, tt.wantErr)
 			}
@@ -57,9 +57,9 @@ func TestParseToken(t *testing.T) {
 
 	testUserID := uuid.New()
 
-	validToken, _ := jwtSvc.GenerateToken(testUserID, 15*time.Minute)
-	expiredToken, _ := jwtSvc.GenerateToken(testUserID, -1*time.Minute)
-	wrongToken, _ := wrongJwtSvc.GenerateToken(testUserID, 15*time.Minute)
+	validToken, _, _ := jwtSvc.GenerateToken(testUserID, 15*time.Minute)
+	expiredToken, _, _ := jwtSvc.GenerateToken(testUserID, -1*time.Minute)
+	wrongToken, _, _ := wrongJwtSvc.GenerateToken(testUserID, 15*time.Minute)
 
 	tests := []struct {
 		name        string
