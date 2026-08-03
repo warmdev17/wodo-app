@@ -78,6 +78,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, req dtos.RegisterRequest
 				return dtos.UserResponse{}, ErrEmailTaken
 			}
 		}
+		return dtos.UserResponse{}, ErrInternalServer
 	}
 
 	userDTO := dtos.UserResponse{
