@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/warmdev17/Wodo-App/internal/dtos"
@@ -59,5 +60,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		res.InternalError(ctx, "Error from server side", err.Error())
 		return
 	}
+	ctx.SetSameSite(http.SameSiteLaxMode)
+	ctx.SetCookie("refresh_token", user.RefreshToken, int(c.authService.RefreshTTL().Seconds()), "/api/v1/auth", "", false, true)
 	res.Success(ctx, "Login successful", user)
 }

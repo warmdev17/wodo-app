@@ -113,6 +113,10 @@ func (s *AuthService) LoginUser(ctx context.Context, req dtos.LoginRequest) (dto
 	}, nil
 }
 
+func (s *AuthService) RefreshTTL() time.Duration {
+	return s.refreshTTL
+}
+
 func (s *AuthService) RefreshToken(ctx context.Context, req dtos.RefreshTokenRequest) (dtos.RefreshTokenResponse, error) {
 	refreshTokenStr := req.RefreshToken
 	claims, err := s.jwtSvc.ParseToken(refreshTokenStr)
