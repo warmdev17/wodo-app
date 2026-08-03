@@ -3,6 +3,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -98,5 +99,58 @@ func (s *AuthService) LoginUser(ctx context.Context, req dtos.LoginRequest) (dto
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User:         dtos.ToUserResponse(user),
+	}, nil
+}
+
+func (s *AuthService) RefreshToken(ctx context.Context, req dtos.RefreshTokenRequest) (dtos.RefreshTokenResponse, error) {
+	refreshTokenStr := req.RefreshToken
+	claims, err := s.jwtSvc.ParseToken(refreshTokenStr)
+	if err != nil {
+		return dtos.RefreshTokenResponse{}, ErrInvalidToken
+	}
+
+	tokenRecord, err := s.repo.GetRefreshTokenByToken(ctx, refreshTokenStr)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return dtos.RefreshTokenResponse{}, ErrTokenNotExists
+		}
+		return dtos.RefreshTokenResponse{}, ErrInternalServer
+	}
+
+	if tokenRecord.IsRevoked {
+		return dtos.RefreshTokenResponse{}, ErrTokenRevoked
+	}
+	if time.Now().After(tokenRecord.ExpiresAt) {
+		return dtos.RefreshTokenResponse{}, ErrTokenExpired
+	}
+
+	err = s.repo.RevokeToken(ctx, tokenRecord.Token)
+	if err != nil {
+		return dtos.RefreshTokenResponse{}, ErrInternalServer
+	}
+
+	newAccessToken, _, err := s.jwtSvc.GenerateToken(claims.UserID, s.accessTTL)
+	if err != nil {
+		return dtos.RefreshTokenResponse{}, fmt.Errorf("failed to generate access token: %w", err)
+	}
+	newRefreshToken, expiredAt, err := s.jwtSvc.GenerateToken(claims.UserID, s.refreshTTL)
+	if err != nil {
+		return dtos.RefreshTokenResponse{}, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	args := repositories.CreateRefreshTokenParams{
+		UserID:    claims.UserID,
+		Token:     newRefreshToken,
+		ExpiresAt: expiredAt,
+	}
+
+	_, err = s.repo.CreateRefreshToken(ctx, args)
+	if err != nil {
+		return dtos.RefreshTokenResponse{}, fmt.Errorf("failed to save refresh token: %w", err)
+	}
+
+	return dtos.RefreshTokenResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
 	}, nil
 }
