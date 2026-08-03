@@ -20,6 +20,7 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByEmailOrUsername(ctx context.Context, identifier string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	RevokeToken(ctx context.Context, token string) error
 }
 
 var _ Querier = (*Queries)(nil)

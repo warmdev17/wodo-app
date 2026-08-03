@@ -26,6 +26,14 @@ FROM
 WHERE
     token = $1;
 
+-- name: RevokeToken :exec
+UPDATE
+    refresh_tokens
+SET
+    is_revoked = TRUE
+WHERE
+    token = $1;
+
 -- name: DeleteRefreshToken :exec
 DELETE FROM refresh_tokens
 WHERE token = $1;
