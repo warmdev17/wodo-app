@@ -42,6 +42,11 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	res.Created(ctx, "Create new account successful", user)
 }
 
+func (c *AuthController) SetRefreshTokenCookie(ctx *gin.Context, token string) {
+	ctx.SetSameSite(http.SameSiteLaxMode)
+	ctx.SetCookie("refresh_token", token, int(c.authService.RefreshTTL().Seconds()), "/api/v1/auth", "", false, true)
+}
+
 func (c *AuthController) Login(ctx *gin.Context) {
 	var req dtos.LoginRequest
 
@@ -60,7 +65,29 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		res.InternalError(ctx, "Error from server side", err.Error())
 		return
 	}
-	ctx.SetSameSite(http.SameSiteLaxMode)
-	ctx.SetCookie("refresh_token", user.RefreshToken, int(c.authService.RefreshTTL().Seconds()), "/api/v1/auth", "", false, true)
+	c.SetRefreshTokenCookie(ctx, user.RefreshToken)
 	res.Success(ctx, "Login successful", user)
+}
+
+func (c *AuthController) Refresh(ctx *gin.Context) {
+	refreshToken, err := ctx.Cookie("refresh_token")
+	if err != nil {
+		res.Unauthorized(ctx, "Missing refresh token cookie", err.Error())
+		return
+	}
+
+	req := dtos.RefreshTokenRequest{RefreshToken: refreshToken}
+	result, err := c.authService.RefreshToken(ctx.Request.Context(), req)
+
+	if err != nil {
+		if errors.Is(err, services.ErrTokenExpired) || errors.Is(err, services.ErrInvalidToken) {
+			res.Unauthorized(ctx, "Invalid or expired refresh token", err.Error())
+			return
+		}
+		res.InternalError(ctx, "Error from server side", err.Error())
+		return
+	}
+
+	c.SetRefreshTokenCookie(ctx, result.RefreshToken)
+	res.Success(ctx, "Refresh new token successful", result)
 }
