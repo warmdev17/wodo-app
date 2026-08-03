@@ -13,7 +13,7 @@ type LoginRequest struct {
 
 type AuthResponse struct {
 	AccessToken  string       `json:"accessToken"`
-	RefreshToken string       `json:"refreshToken"`
+	RefreshToken string       `json:"-"`
 	User         UserResponse `json:"user"`
 }
 
