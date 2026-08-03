@@ -5,9 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/warmdev17/Wodo-App/internal/dtos"
 	"github.com/warmdev17/Wodo-App/internal/repositories"
@@ -24,6 +24,31 @@ type AuthService struct {
 
 func NewAuthService(repo repositories.Querier, jwtSvc *jwt.Service, accessTTL time.Duration, refreshTTL time.Duration) *AuthService {
 	return &AuthService{repo: repo, jwtSvc: jwtSvc, accessTTL: accessTTL, refreshTTL: refreshTTL}
+}
+
+func (s *AuthService) issueTokenPair(ctx context.Context, userID uuid.UUID) (string, string, error) {
+	accessToken, _, err := s.jwtSvc.GenerateToken(userID, s.accessTTL)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, expiredAt, err := s.jwtSvc.GenerateToken(userID, s.refreshTTL)
+	if err != nil {
+		return "", "", err
+	}
+
+	args := repositories.CreateRefreshTokenParams{
+		UserID:    userID,
+		Token:     refreshToken,
+		ExpiresAt: expiredAt,
+	}
+
+	_, err = s.repo.CreateRefreshToken(ctx, args)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func (s *AuthService) RegisterUser(ctx context.Context, req dtos.RegisterRequest) (dtos.UserResponse, error) {
@@ -75,24 +100,9 @@ func (s *AuthService) LoginUser(ctx context.Context, req dtos.LoginRequest) (dto
 		return dtos.AuthResponse{}, ErrInvalidCredentials
 	}
 
-	accessToken, _, err := s.jwtSvc.GenerateToken(user.ID, s.accessTTL)
+	accessToken, refreshToken, err := s.issueTokenPair(ctx, user.ID)
 	if err != nil {
-		return dtos.AuthResponse{}, fmt.Errorf("failed to generate access token: %w", err)
-	}
-
-	refreshToken, expiredAt, err := s.jwtSvc.GenerateToken(user.ID, s.refreshTTL)
-	if err != nil {
-		return dtos.AuthResponse{}, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
-
-	args := repositories.CreateRefreshTokenParams{
-		UserID:    user.ID,
-		Token:     refreshToken,
-		ExpiresAt: expiredAt,
-	}
-	_, err = s.repo.CreateRefreshToken(ctx, args)
-	if err != nil {
-		return dtos.AuthResponse{}, fmt.Errorf("failed to save refresh token: %w", err)
+		return dtos.AuthResponse{}, ErrInternalServer
 	}
 
 	return dtos.AuthResponse{
@@ -129,28 +139,14 @@ func (s *AuthService) RefreshToken(ctx context.Context, req dtos.RefreshTokenReq
 		return dtos.RefreshTokenResponse{}, ErrInternalServer
 	}
 
-	newAccessToken, _, err := s.jwtSvc.GenerateToken(claims.UserID, s.accessTTL)
+	newAccessToken, newRefreshToken, err := s.issueTokenPair(ctx, claims.UserID)
 	if err != nil {
-		return dtos.RefreshTokenResponse{}, fmt.Errorf("failed to generate access token: %w", err)
-	}
-	newRefreshToken, expiredAt, err := s.jwtSvc.GenerateToken(claims.UserID, s.refreshTTL)
-	if err != nil {
-		return dtos.RefreshTokenResponse{}, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
-
-	args := repositories.CreateRefreshTokenParams{
-		UserID:    claims.UserID,
-		Token:     newRefreshToken,
-		ExpiresAt: expiredAt,
-	}
-
-	_, err = s.repo.CreateRefreshToken(ctx, args)
-	if err != nil {
-		return dtos.RefreshTokenResponse{}, fmt.Errorf("failed to save refresh token: %w", err)
+		return dtos.RefreshTokenResponse{}, ErrInternalServer
 	}
 
 	return dtos.RefreshTokenResponse{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
 	}, nil
+
 }
