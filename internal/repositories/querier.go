@@ -16,6 +16,7 @@ type Querier interface {
 	DeleteRefreshToken(ctx context.Context, token string) error
 	DeleteUserRefreshToken(ctx context.Context, userID uuid.UUID) error
 	GetRefreshToken(ctx context.Context, token string) (RefreshToken, error)
+	GetRefreshTokenByToken(ctx context.Context, token string) (GetRefreshTokenByTokenRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByEmailOrUsername(ctx context.Context, identifier string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
