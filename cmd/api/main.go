@@ -43,6 +43,7 @@ func main() {
 	{
 		api.POST("/auth/register", authCtrl.Register)
 		api.POST("/auth/login", authCtrl.Login)
+		api.POST("/auth/refresh", authCtrl.Register)
 	}
 
 	protected := r.Group("/api/v1")
