@@ -11,7 +11,6 @@ import (
 	"github.com/warmdev17/Wodo-App/internal/repositories"
 	"github.com/warmdev17/Wodo-App/internal/services"
 	"github.com/warmdev17/Wodo-App/pkg/jwt"
-	"github.com/warmdev17/Wodo-App/pkg/response"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -36,6 +35,7 @@ func main() {
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
 	authSvc := services.NewAuthService(repo, jwtSvc, cfg.AccessTokenExpiration, cfg.RefreshTokenExpiration)
 	authCtrl := controllers.NewAuthController(authSvc, cfg.IsProduction)
+	userCtrl := controllers.NewUserController()
 
 	r := gin.Default()
 
@@ -49,12 +49,7 @@ func main() {
 	protected := r.Group("/api/v1")
 	protected.Use(middlewares.AuthMiddleware(jwtSvc))
 	{
-		protected.GET("/users/me", func(ctx *gin.Context) {
-			userID, _ := ctx.Get("userID")
-			response.Success(ctx, "Get profile successful", gin.H{
-				"userId": userID,
-			})
-		})
+		protected.GET("/users/me", userCtrl.GetMe)
 		protected.POST("/auth/logout", authCtrl.Logout)
 	}
 
