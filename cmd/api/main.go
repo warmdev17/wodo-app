@@ -35,7 +35,7 @@ func main() {
 	repo := repositories.New(db)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
 	authSvc := services.NewAuthService(repo, jwtSvc, cfg.AccessTokenExpiration, cfg.RefreshTokenExpiration)
-	authCtrl := controllers.NewAuthController(authSvc)
+	authCtrl := controllers.NewAuthController(authSvc, cfg.IsProduction)
 
 	r := gin.Default()
 
@@ -43,7 +43,7 @@ func main() {
 	{
 		api.POST("/auth/register", authCtrl.Register)
 		api.POST("/auth/login", authCtrl.Login)
-		api.POST("/auth/refresh", authCtrl.Register)
+		api.POST("/auth/refresh", authCtrl.Refresh)
 	}
 
 	protected := r.Group("/api/v1")

@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	IsProduction           bool
 	DatabaseURL            string
 	JWTSecret              string
 	AccessTokenExpiration  time.Duration
@@ -17,6 +18,7 @@ type Config struct {
 }
 
 var defaults = map[string]string{
+	"APP_ENV":                  "development",
 	"DATABASE_URL":             "postgres://postgres:maiphuong@localhost:5432/wodo_app_db?sslmode=disable",
 	"JWT_SECRET":               "the-secret-jwt-key",
 	"ACCESS_TOKEN_EXPIRATION":  "15m",
@@ -46,6 +48,7 @@ func Load() *Config {
 		log.Println("Note: .env file not found, using environment variables or defaults")
 	}
 	return &Config{
+		IsProduction:           getEnv("APP_ENV") == "production",
 		DatabaseURL:            getEnv("DATABASE_URL"),
 		JWTSecret:              getEnv("JWT_SECRET"),
 		AccessTokenExpiration:  parseDurationEnv("ACCESS_TOKEN_EXPIRATION"),
