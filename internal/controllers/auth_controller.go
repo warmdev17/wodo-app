@@ -48,6 +48,11 @@ func (c *AuthController) SetRefreshTokenCookie(ctx *gin.Context, token string) {
 	ctx.SetCookie("refresh_token", token, int(c.authService.RefreshTTL().Seconds()), "/api/v1/auth", "", c.isProduction, true)
 }
 
+func (c *AuthController) ClearRefreshTokenCookie(ctx *gin.Context) {
+	ctx.SetSameSite(http.SameSiteLaxMode)
+	ctx.SetCookie("refresh_token", "", -1, "/api/v1/auth", "", c.isProduction, true)
+}
+
 func (c *AuthController) Login(ctx *gin.Context) {
 	var req dtos.LoginRequest
 
@@ -110,6 +115,6 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("refresh_token", "", -1, "/api/v1/auth", "", c.isProduction, true)
+	c.ClearRefreshTokenCookie(ctx)
 	res.SuccessNoData(ctx, "Logout successful")
 }
