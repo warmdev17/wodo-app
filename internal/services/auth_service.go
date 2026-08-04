@@ -155,3 +155,26 @@ func (s *AuthService) RefreshToken(ctx context.Context, req dtos.RefreshTokenReq
 	}, nil
 
 }
+
+func (s *AuthService) LogoutUser(ctx context.Context, refreshToken string) error {
+	tokenRecord, err := s.repo.GetRefreshTokenByToken(ctx, refreshToken)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrTokenNotExists
+		}
+		return ErrInternalServer
+	}
+	if tokenRecord.IsRevoked {
+		return ErrTokenRevoked
+	}
+	if time.Now().After(tokenRecord.ExpiresAt) {
+		return ErrTokenExpired
+	}
+
+	err = s.repo.RevokeToken(ctx, tokenRecord.Token)
+	if err != nil {
+		return ErrInternalServer
+	}
+
+	return nil
+}

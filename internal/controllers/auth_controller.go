@@ -11,11 +11,12 @@ import (
 )
 
 type AuthController struct {
-	authService *services.AuthService
+	authService  *services.AuthService
+	isProduction bool
 }
 
-func NewAuthController(authService *services.AuthService) *AuthController {
-	return &AuthController{authService: authService}
+func NewAuthController(authService *services.AuthService, isProduction bool) *AuthController {
+	return &AuthController{authService: authService, isProduction: isProduction}
 }
 
 func (c *AuthController) Register(ctx *gin.Context) {
@@ -44,7 +45,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 
 func (c *AuthController) SetRefreshTokenCookie(ctx *gin.Context, token string) {
 	ctx.SetSameSite(http.SameSiteLaxMode)
-	ctx.SetCookie("refresh_token", token, int(c.authService.RefreshTTL().Seconds()), "/api/v1/auth", "", false, true)
+	ctx.SetCookie("refresh_token", token, int(c.authService.RefreshTTL().Seconds()), "/api/v1/auth", "", c.isProduction, true)
 }
 
 func (c *AuthController) Login(ctx *gin.Context) {
@@ -90,4 +91,25 @@ func (c *AuthController) Refresh(ctx *gin.Context) {
 
 	c.SetRefreshTokenCookie(ctx, result.RefreshToken)
 	res.Success(ctx, "Refresh new token successful", result)
+}
+
+func (c *AuthController) Logout(ctx *gin.Context) {
+	refreshToken, err := ctx.Cookie("refresh_token")
+	if err != nil {
+		res.Unauthorized(ctx, "Missing refresh token cookie", err.Error())
+		return
+	}
+
+	err = c.authService.LogoutUser(ctx, refreshToken)
+	if err != nil {
+		if errors.Is(err, services.ErrInternalServer) {
+			res.InternalError(ctx, "Error from server side", err.Error())
+			return
+		}
+		res.Unauthorized(ctx, "Token has invalid or expired", err.Error())
+		return
+	}
+
+	ctx.SetCookie("refresh_token", "", -1, "/api/v1/auth", "", c.isProduction, true)
+	res.SuccessNoData(ctx, "Logout successful")
 }
