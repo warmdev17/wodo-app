@@ -31,6 +31,10 @@ func Success[T any](c *gin.Context, message string, data T) {
 	send(c, http.StatusOK, "success", message, data, nil)
 }
 
+func SuccessNoData(c *gin.Context, message string) {
+	send(c, http.StatusOK, "success", message, nil, nil)
+}
+
 func Created[T any](c *gin.Context, message string, data T) {
 	send(c, http.StatusCreated, "success", message, data, nil)
 }
