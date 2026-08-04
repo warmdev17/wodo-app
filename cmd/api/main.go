@@ -55,6 +55,7 @@ func main() {
 				"userId": userID,
 			})
 		})
+		protected.POST("/auth/logout", authCtrl.Logout)
 	}
 
 	err = r.Run(":8080")
