@@ -5,33 +5,197 @@
 package repositories
 
 import (
-	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type TaskPriority string
+
+const (
+	TaskPriorityLOW    TaskPriority = "LOW"
+	TaskPriorityMEDIUM TaskPriority = "MEDIUM"
+	TaskPriorityHIGH   TaskPriority = "HIGH"
+	TaskPriorityURGENT TaskPriority = "URGENT"
+)
+
+func (e *TaskPriority) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TaskPriority(s)
+	case string:
+		*e = TaskPriority(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TaskPriority: %T", src)
+	}
+	return nil
+}
+
+type NullTaskPriority struct {
+	TaskPriority TaskPriority `json:"task_priority"`
+	Valid        bool         `json:"valid"` // Valid is true if TaskPriority is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTaskPriority) Scan(value interface{}) error {
+	if value == nil {
+		ns.TaskPriority, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TaskPriority.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTaskPriority) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TaskPriority), nil
+}
+
+type TaskStatus string
+
+const (
+	TaskStatusTODO       TaskStatus = "TODO"
+	TaskStatusINPROGRESS TaskStatus = "IN_PROGRESS"
+	TaskStatusDONE       TaskStatus = "DONE"
+	TaskStatusCANCELLED  TaskStatus = "CANCELLED"
+)
+
+func (e *TaskStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TaskStatus(s)
+	case string:
+		*e = TaskStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TaskStatus: %T", src)
+	}
+	return nil
+}
+
+type NullTaskStatus struct {
+	TaskStatus TaskStatus `json:"task_status"`
+	Valid      bool       `json:"valid"` // Valid is true if TaskStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTaskStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.TaskStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TaskStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTaskStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TaskStatus), nil
+}
+
+type WorkspaceRole string
+
+const (
+	WorkspaceRoleOWNER  WorkspaceRole = "OWNER"
+	WorkspaceRoleADMIN  WorkspaceRole = "ADMIN"
+	WorkspaceRoleMEMBER WorkspaceRole = "MEMBER"
+	WorkspaceRoleVIEWER WorkspaceRole = "VIEWER"
+)
+
+func (e *WorkspaceRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WorkspaceRole(s)
+	case string:
+		*e = WorkspaceRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WorkspaceRole: %T", src)
+	}
+	return nil
+}
+
+type NullWorkspaceRole struct {
+	WorkspaceRole WorkspaceRole `json:"workspace_role"`
+	Valid         bool          `json:"valid"` // Valid is true if WorkspaceRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWorkspaceRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.WorkspaceRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WorkspaceRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWorkspaceRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WorkspaceRole), nil
+}
+
 type Project struct {
-	ID        int32        `json:"id"`
-	Name      string       `json:"name"`
-	UserID    uuid.UUID    `json:"user_id"`
-	CreatedAt sql.NullTime `json:"created_at"`
+	ID        int32      `json:"id"`
+	Name      string     `json:"name"`
+	UserID    uuid.UUID  `json:"user_id"`
+	CreatedAt *time.Time `json:"created_at"`
 }
 
 type RefreshToken struct {
-	ID        uuid.UUID `json:"id"`
-	UserID    uuid.UUID `json:"user_id"`
-	Token     string    `json:"token"`
-	ExpiresAt time.Time `json:"expires_at"`
-	CreatedAt time.Time `json:"created_at"`
-	IsRevoked bool      `json:"is_revoked"`
+	ID        uuid.UUID          `json:"id"`
+	UserID    uuid.UUID          `json:"user_id"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	IsRevoked bool               `json:"is_revoked"`
+}
+
+type Task struct {
+	ID          uuid.UUID          `json:"id"`
+	WorkspaceID uuid.UUID          `json:"workspace_id"`
+	CreatedBy   uuid.UUID          `json:"created_by"`
+	AssigneeID  *uuid.UUID         `json:"assignee_id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	Status      TaskStatus         `json:"status"`
+	Priority    TaskPriority       `json:"priority"`
+	DueDate     *time.Time         `json:"due_date"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	HashPassword string    `json:"hash_password"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID           uuid.UUID          `json:"id"`
+	Username     string             `json:"username"`
+	Email        string             `json:"email"`
+	HashPassword string             `json:"hash_password"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Workspace struct {
+	ID        uuid.UUID          `json:"id"`
+	Name      string             `json:"name"`
+	Slug      string             `json:"slug"`
+	OwnerID   uuid.UUID          `json:"owner_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkspaceMember struct {
+	WorkspaceID uuid.UUID          `json:"workspace_id"`
+	UserID      uuid.UUID          `json:"user_id"`
+	Role        WorkspaceRole      `json:"role"`
+	JoinedAt    pgtype.Timestamptz `json:"joined_at"`
 }

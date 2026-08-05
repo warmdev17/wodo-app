@@ -11,16 +11,28 @@ import (
 )
 
 type Querier interface {
+	AddWorkspaceMember(ctx context.Context, arg AddWorkspaceMemberParams) (WorkspaceMember, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error)
+	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateWorkspace(ctx context.Context, arg CreateWorkspaceParams) (Workspace, error)
 	DeleteRefreshToken(ctx context.Context, token string) error
+	DeleteTask(ctx context.Context, id uuid.UUID) error
 	DeleteUserRefreshToken(ctx context.Context, userID uuid.UUID) error
 	GetRefreshToken(ctx context.Context, token string) (RefreshToken, error)
 	GetRefreshTokenByToken(ctx context.Context, token string) (GetRefreshTokenByTokenRow, error)
+	GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByEmailOrUsername(ctx context.Context, identifier string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	GetWorkspaceByID(ctx context.Context, id uuid.UUID) (Workspace, error)
+	GetWorkspaceBySlug(ctx context.Context, slug string) (Workspace, error)
+	GetWorkspaceMember(ctx context.Context, arg GetWorkspaceMemberParams) (WorkspaceMember, error)
+	GetWorkspacesByUserID(ctx context.Context, userID uuid.UUID) ([]GetWorkspacesByUserIDRow, error)
+	ListTaskByAssignee(ctx context.Context, arg ListTaskByAssigneeParams) ([]Task, error)
+	ListTasksByWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]Task, error)
 	RevokeToken(ctx context.Context, token string) error
+	UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error)
 }
 
 var _ Querier = (*Queries)(nil)

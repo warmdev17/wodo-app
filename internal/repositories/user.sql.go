@@ -23,7 +23,7 @@ type CreateUserParams struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Email, arg.HashPassword)
+	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.Email, arg.HashPassword)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -47,7 +47,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -72,7 +72,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetUserByEmailOrUsername(ctx context.Context, identifier string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmailOrUsername, identifier)
+	row := q.db.QueryRow(ctx, getUserByEmailOrUsername, identifier)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -96,7 +96,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
 		&i.ID,
