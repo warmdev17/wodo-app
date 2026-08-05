@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -15,6 +14,7 @@ import (
 	"github.com/warmdev17/Wodo-App/internal/repositories"
 	"github.com/warmdev17/Wodo-App/pkg/jwt"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -46,17 +46,11 @@ func TestRegisterUser(t *testing.T) {
 	cfg := config.Load()
 
 	connStr := "postgres://postgres:maiphuong@127.0.0.1:5432/wodo_test_db?sslmode=disable"
-	testDB, err := sql.Open("pgx", connStr)
+	testDB, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect database: %v", err)
 	}
-	defer func() {
-		err := testDB.Close()
-
-		if err != nil {
-			log.Println("Failed to close connection pool")
-		}
-	}()
+	defer testDB.Close()
 
 	repo := repositories.New(testDB)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
@@ -149,17 +143,11 @@ func TestLoginUser(t *testing.T) {
 	cfg := config.Load()
 
 	connStr := "postgres://postgres:maiphuong@127.0.0.1:5432/wodo_test_db?sslmode=disable"
-	testDB, err := sql.Open("pgx", connStr)
+	testDB, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect database: %v", err)
 	}
-	defer func() {
-		err := testDB.Close()
-
-		if err != nil {
-			log.Println("Failed to close connection pool")
-		}
-	}()
+	defer testDB.Close()
 
 	repo := repositories.New(testDB)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
