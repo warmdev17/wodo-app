@@ -7,9 +7,9 @@ package repositories
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createRefreshToken = `-- name: CreateRefreshToken :one
@@ -20,13 +20,13 @@ RETURNING
 `
 
 type CreateRefreshTokenParams struct {
-	UserID    uuid.UUID `json:"user_id"`
-	Token     string    `json:"token"`
-	ExpiresAt time.Time `json:"expires_at"`
+	UserID    uuid.UUID          `json:"user_id"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 }
 
 func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error) {
-	row := q.db.QueryRowContext(ctx, createRefreshToken, arg.UserID, arg.Token, arg.ExpiresAt)
+	row := q.db.QueryRow(ctx, createRefreshToken, arg.UserID, arg.Token, arg.ExpiresAt)
 	var i RefreshToken
 	err := row.Scan(
 		&i.ID,
@@ -45,7 +45,7 @@ WHERE token = $1
 `
 
 func (q *Queries) DeleteRefreshToken(ctx context.Context, token string) error {
-	_, err := q.db.ExecContext(ctx, deleteRefreshToken, token)
+	_, err := q.db.Exec(ctx, deleteRefreshToken, token)
 	return err
 }
 
@@ -55,7 +55,7 @@ WHERE user_id = $1
 `
 
 func (q *Queries) DeleteUserRefreshToken(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteUserRefreshToken, userID)
+	_, err := q.db.Exec(ctx, deleteUserRefreshToken, userID)
 	return err
 }
 
@@ -70,7 +70,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetRefreshToken(ctx context.Context, token string) (RefreshToken, error) {
-	row := q.db.QueryRowContext(ctx, getRefreshToken, token)
+	row := q.db.QueryRow(ctx, getRefreshToken, token)
 	var i RefreshToken
 	err := row.Scan(
 		&i.ID,
@@ -98,16 +98,16 @@ WHERE
 `
 
 type GetRefreshTokenByTokenRow struct {
-	ID        uuid.UUID `json:"id"`
-	UserID    uuid.UUID `json:"user_id"`
-	Token     string    `json:"token"`
-	IsRevoked bool      `json:"is_revoked"`
-	ExpiresAt time.Time `json:"expires_at"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        uuid.UUID          `json:"id"`
+	UserID    uuid.UUID          `json:"user_id"`
+	Token     string             `json:"token"`
+	IsRevoked bool               `json:"is_revoked"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) GetRefreshTokenByToken(ctx context.Context, token string) (GetRefreshTokenByTokenRow, error) {
-	row := q.db.QueryRowContext(ctx, getRefreshTokenByToken, token)
+	row := q.db.QueryRow(ctx, getRefreshTokenByToken, token)
 	var i GetRefreshTokenByTokenRow
 	err := row.Scan(
 		&i.ID,
@@ -130,6 +130,6 @@ WHERE
 `
 
 func (q *Queries) RevokeToken(ctx context.Context, token string) error {
-	_, err := q.db.ExecContext(ctx, revokeToken, token)
+	_, err := q.db.Exec(ctx, revokeToken, token)
 	return err
 }
