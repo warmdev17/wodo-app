@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type TaskPriority string
@@ -153,49 +152,49 @@ type Project struct {
 }
 
 type RefreshToken struct {
-	ID        uuid.UUID          `json:"id"`
-	UserID    uuid.UUID          `json:"user_id"`
-	Token     string             `json:"token"`
-	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	IsRevoked bool               `json:"is_revoked"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+	IsRevoked bool      `json:"is_revoked"`
 }
 
 type Task struct {
-	ID          uuid.UUID          `json:"id"`
-	WorkspaceID uuid.UUID          `json:"workspace_id"`
-	CreatedBy   uuid.UUID          `json:"created_by"`
-	AssigneeID  *uuid.UUID         `json:"assignee_id"`
-	Title       string             `json:"title"`
-	Description *string            `json:"description"`
-	Status      TaskStatus         `json:"status"`
-	Priority    TaskPriority       `json:"priority"`
-	DueDate     *time.Time         `json:"due_date"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID          uuid.UUID    `json:"id"`
+	WorkspaceID uuid.UUID    `json:"workspace_id"`
+	CreatedBy   uuid.UUID    `json:"created_by"`
+	AssigneeID  *uuid.UUID   `json:"assignee_id"`
+	Title       string       `json:"title"`
+	Description *string      `json:"description"`
+	Status      TaskStatus   `json:"status"`
+	Priority    TaskPriority `json:"priority"`
+	DueDate     *time.Time   `json:"due_date"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type User struct {
-	ID           uuid.UUID          `json:"id"`
-	Username     string             `json:"username"`
-	Email        string             `json:"email"`
-	HashPassword string             `json:"hash_password"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	ID           uuid.UUID `json:"id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	HashPassword string    `json:"hash_password"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type Workspace struct {
-	ID        uuid.UUID          `json:"id"`
-	Name      string             `json:"name"`
-	Slug      string             `json:"slug"`
-	OwnerID   uuid.UUID          `json:"owner_id"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Slug      string    `json:"slug"`
+	OwnerID   uuid.UUID `json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type WorkspaceMember struct {
-	WorkspaceID uuid.UUID          `json:"workspace_id"`
-	UserID      uuid.UUID          `json:"user_id"`
-	Role        WorkspaceRole      `json:"role"`
-	JoinedAt    pgtype.Timestamptz `json:"joined_at"`
+	WorkspaceID uuid.UUID     `json:"workspace_id"`
+	UserID      uuid.UUID     `json:"user_id"`
+	Role        WorkspaceRole `json:"role"`
+	JoinedAt    time.Time     `json:"joined_at"`
 }
