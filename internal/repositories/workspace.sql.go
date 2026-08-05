@@ -7,9 +7,9 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addWorkspaceMember = `-- name: AddWorkspaceMember :one
@@ -154,13 +154,13 @@ ORDER BY
 `
 
 type GetWorkspacesByUserIDRow struct {
-	ID        uuid.UUID          `json:"id"`
-	Name      string             `json:"name"`
-	Slug      string             `json:"slug"`
-	OwnerID   uuid.UUID          `json:"owner_id"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-	Role      WorkspaceRole      `json:"role"`
+	ID        uuid.UUID     `json:"id"`
+	Name      string        `json:"name"`
+	Slug      string        `json:"slug"`
+	OwnerID   uuid.UUID     `json:"owner_id"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+	Role      WorkspaceRole `json:"role"`
 }
 
 func (q *Queries) GetWorkspacesByUserID(ctx context.Context, userID uuid.UUID) ([]GetWorkspacesByUserIDRow, error) {

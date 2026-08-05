@@ -30,6 +30,10 @@ sql:
               type: "string"
               pointer: true
           - db_type: "timestamptz"
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "timestamptz"
             nullable: true
             go_type:
               import: "time"
