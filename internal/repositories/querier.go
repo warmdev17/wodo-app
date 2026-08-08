@@ -29,6 +29,7 @@ type Querier interface {
 	GetWorkspaceBySlug(ctx context.Context, slug string) (Workspace, error)
 	GetWorkspaceMember(ctx context.Context, arg GetWorkspaceMemberParams) (WorkspaceMember, error)
 	GetWorkspacesByUserID(ctx context.Context, userID uuid.UUID) ([]GetWorkspacesByUserIDRow, error)
+	ListExistingSlug(ctx context.Context, slug string) ([]string, error)
 	ListTaskByAssignee(ctx context.Context, arg ListTaskByAssigneeParams) ([]Task, error)
 	ListTasksByWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]Task, error)
 	RevokeToken(ctx context.Context, token string) error

@@ -50,3 +50,13 @@ WHERE
     AND user_id = $2
 LIMIT 1;
 
+-- name: ListExistingSlug :many
+SELECT
+    slug
+FROM
+    workspaces
+WHERE
+    slug LIKE $1
+ORDER BY
+    slug ASC;
+

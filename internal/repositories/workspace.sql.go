@@ -190,3 +190,34 @@ func (q *Queries) GetWorkspacesByUserID(ctx context.Context, userID uuid.UUID) (
 	}
 	return items, nil
 }
+
+const listExistingSlug = `-- name: ListExistingSlug :many
+SELECT
+    slug
+FROM
+    workspaces
+WHERE
+    slug LIKE $1
+ORDER BY
+    slug ASC
+`
+
+func (q *Queries) ListExistingSlug(ctx context.Context, slug string) ([]string, error) {
+	rows, err := q.db.Query(ctx, listExistingSlug, slug)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var slug string
+		if err := rows.Scan(&slug); err != nil {
+			return nil, err
+		}
+		items = append(items, slug)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
