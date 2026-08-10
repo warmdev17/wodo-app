@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -12,24 +12,20 @@ import (
 	"github.com/warmdev17/Wodo-App/internal/services"
 	"github.com/warmdev17/Wodo-App/pkg/jwt"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
+	ctx := context.Background()
 	cfg := config.Load()
 
 	connStr := cfg.DatabaseURL
-	db, err := sql.Open("pgx", connStr)
+	db, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect database: %v", err)
 	}
-	defer func() {
-		err := db.Close()
-
-		if err != nil {
-			log.Println("Failed to close connection pool")
-		}
-	}()
+	db.Close()
 
 	repo := repositories.New(db)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
