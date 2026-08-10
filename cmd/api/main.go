@@ -30,8 +30,10 @@ func main() {
 	repo := repositories.New(db)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
 	authSvc := services.NewAuthService(repo, jwtSvc, cfg.AccessTokenExpiration, cfg.RefreshTokenExpiration)
+	workspaceSvc := services.NewWorkspaceService(repo)
 	authCtrl := controllers.NewAuthController(authSvc, cfg.IsProduction)
 	userCtrl := controllers.NewUserController()
+	workspaceCtrl := controllers.NewWorkspaceController(workspaceSvc)
 
 	r := gin.Default()
 
@@ -45,8 +47,14 @@ func main() {
 	protected := r.Group("/api/v1")
 	protected.Use(middlewares.AuthMiddleware(jwtSvc))
 	{
+		// user
 		protected.GET("/users/me", userCtrl.GetMe)
+
+		// auth
 		protected.POST("/auth/logout", authCtrl.Logout)
+
+		// workspace
+		protected.POST("/workspaces", workspaceCtrl.Create)
 	}
 
 	err = r.Run(":8080")
