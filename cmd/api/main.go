@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect database: %v", err)
 	}
-	db.Close()
+	defer db.Close()
 
 	repo := repositories.New(db)
 	jwtSvc := jwt.NewService(cfg.JWTSecret)
