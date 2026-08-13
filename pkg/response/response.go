@@ -54,3 +54,7 @@ func InternalError(c *gin.Context, message string, errDetail any) {
 func Conflict(c *gin.Context, message string, errDetail any) {
 	send(c, http.StatusConflict, "fail", message, nil, errDetail)
 }
+
+func NotFound(c *gin.Context, message string, errDetail any) {
+	send(c, http.StatusNotFound, "fail", message, nil, nil)
+}
