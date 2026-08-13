@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/warmdev17/Wodo-App/internal/dtos"
 	"github.com/warmdev17/Wodo-App/internal/services"
-	"github.com/warmdev17/Wodo-App/pkg/response"
+	res "github.com/warmdev17/Wodo-App/pkg/response"
+	"github.com/warmdev17/Wodo-App/pkg/utils"
 )
 
 type WorkspaceController struct {
@@ -18,8 +21,27 @@ func NewWorkspaceController(workspaceService *services.WorkspaceService) *Worksp
 func (c *WorkspaceController) Create(ctx *gin.Context) {
 	var req dtos.CreateWorkspaceRequest
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx, "Invalid request body", err.Error())
+	userID, err := utils.GetUserIDFromContext(ctx)
+	if err != nil {
+		if errors.Is(err, services.ErrContextNotFound) {
+			res.Unauthorized(ctx, "Unauthorized", "User context not found")
+			return
+		}
+		res.InternalError(ctx, "Error from server side", err.Error())
 		return
 	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		res.BadRequest(ctx, "Invalid request body", err.Error())
+		return
+	}
+
+	workspace, err := c.workspaceService.CreateWorkspace(ctx, req, userID)
+	if err != nil {
+		if errors.Is(err, services.ErrInternalServer) {
+			res.InternalError(ctx, "Error from server side", err.Error())
+			return
+		}
+	}
+	res.Created(ctx, "Workspace created successfully", workspace)
 }

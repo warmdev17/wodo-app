@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -70,4 +72,16 @@ func (s *WorkspaceService) CreateWorkspace(ctx context.Context, req dtos.CreateW
 		CreatedAt: workspace.CreatedAt,
 		UpdatedAt: workspace.UpdatedAt,
 	}, nil
+}
+
+func (s *WorkspaceService) GetWorkspace(ctx context.Context, id uuid.UUID) (dtos.WorkspaceResponse, error) {
+	workspace, err := s.repo.GetWorkspaceByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return dtos.WorkspaceResponse{}, ErrWorkspaceNotFound
+		}
+		return dtos.WorkspaceResponse{}, ErrInternalServer
+	}
+
+	return dtos.ToWorkspaceResponse(workspace), nil
 }

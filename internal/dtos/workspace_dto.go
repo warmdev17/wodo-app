@@ -1,6 +1,10 @@
 package dtos
 
-import "time"
+import (
+	"time"
+
+	"github.com/warmdev17/Wodo-App/internal/repositories"
+)
 
 type CreateWorkspaceRequest struct {
 	Name string `json:"name" binding:"required"`
@@ -15,4 +19,13 @@ type WorkspaceResponse struct {
 	Slug      string    `json:"slug"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func ToWorkspaceResponse(w repositories.Workspace) WorkspaceResponse {
+	return WorkspaceResponse{
+		Name:      w.Name,
+		Slug:      w.Slug,
+		CreatedAt: w.CreatedAt,
+		UpdatedAt: w.UpdatedAt,
+	}
 }
