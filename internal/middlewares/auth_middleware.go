@@ -6,9 +6,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/warmdev17/Wodo-App/pkg/jwt"
 	res "github.com/warmdev17/Wodo-App/pkg/response"
 )
+
+const UserIDKey string = "userID"
 
 func AuthMiddleware(jwtSvc *jwt.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -38,7 +41,8 @@ func AuthMiddleware(jwtSvc *jwt.Service) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("userID", claims.UserID)
+		uid, _ := uuid.Parse(claims.ID)
+		ctx.Set(UserIDKey, uid)
 		ctx.Next()
 	}
 }
