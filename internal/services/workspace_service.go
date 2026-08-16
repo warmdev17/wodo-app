@@ -74,7 +74,7 @@ func (s *WorkspaceService) CreateWorkspace(ctx context.Context, req dtos.CreateW
 	}, nil
 }
 
-func (s *WorkspaceService) GetWorkspace(ctx context.Context, id uuid.UUID) (dtos.WorkspaceResponse, error) {
+func (s *WorkspaceService) GetByID(ctx context.Context, id uuid.UUID) (dtos.WorkspaceResponse, error) {
 	workspace, err := s.repo.GetWorkspaceByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
