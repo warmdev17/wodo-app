@@ -85,3 +85,15 @@ func (s *WorkspaceService) GetByID(ctx context.Context, id uuid.UUID) (dtos.Work
 
 	return dtos.ToWorkspaceResponse(workspace), nil
 }
+
+func (s *WorkspaceService) GetBySlug(ctx context.Context, slug string) (dtos.WorkspaceResponse, error) {
+	workspace, err := s.repo.GetWorkspaceBySlug(ctx, slug)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return dtos.WorkspaceResponse{}, ErrWorkspaceNotFound
+		}
+		return dtos.WorkspaceResponse{}, ErrInternalServer
+	}
+
+	return dtos.ToWorkspaceResponse(workspace), nil
+}

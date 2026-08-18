@@ -55,6 +55,8 @@ func main() {
 
 		// workspace
 		protected.POST("/workspaces", workspaceCtrl.Create)
+		protected.GET("/workspaces/:id", workspaceCtrl.GetByID)
+		protected.GET("/workspaces/:slug", workspaceCtrl.GetBySlug)
 	}
 
 	err = r.Run(":8080")

@@ -65,3 +65,16 @@ func (c *WorkspaceController) GetByID(ctx *gin.Context) {
 	}
 	res.Success(ctx, "Get workspace successfully", workspace)
 }
+
+func (c *WorkspaceController) GetBySlug(ctx *gin.Context) {
+	slug := ctx.Param("slug")
+
+	workspace, err := c.workspaceService.GetBySlug(ctx.Request.Context(), slug)
+	if err != nil {
+		if errors.Is(err, services.ErrWorkspaceNotFound) {
+			res.NotFound(ctx, "Workspace not found")
+			return
+		}
+	}
+	res.Success(ctx, "Get workspace successfully", workspace)
+}
